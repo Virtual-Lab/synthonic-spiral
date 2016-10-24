@@ -1,1 +1,1 @@
-# synthonic-spiral
+# syntonic-spiral
