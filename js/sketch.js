@@ -3,8 +3,8 @@
 
 var TWO_PI = 2 * Math.PI;
 var n_osc = 13;
-var tones = new Array(n_osc);
-for (var i = 0; i < n_osc.length; i++) {tones[i] = new Sound()};
+var tones = [];
+// for (var i = 0; i < n_osc.length; i++) {tones[i] = new Sound()};
 var majorTriad = [0, 4, 7];
 var chords = [
   [0], // a
@@ -99,8 +99,8 @@ var myScore = [[106], [123], [137], [123], [106], [137], [123], [106], [159],
 
 var myScore_12, c_score;
 
-var u = 50, x0 = 220, y0 = 220;  // grid
-var x0_s = 600, y0_s = 200, r0_s = 150, dr_s = -20; // spiral
+var u = 50, x0 = 170, y0 = 220;  // grid
+var x0_s = 500, y0_s = 200, r0_s = 150, dr_s = -20; // spiral
 var r_c = 60;  // diatonic circle
 
 var nm_note = function (n) {  // n = 0 -> F
@@ -229,24 +229,26 @@ function clearGrid(id_scale) {
 
 function playNote(id_scale, id_pitch, id_osc) {
   var freq = pitchToFreq(id_scale, id_pitch);
+  var time = false;
+  if(pl_score != 0) time = 0.2;
   showNote(id_scale, id_pitch);
-  tones[id_osc].play(freq, 0.5);
+  tones[id_osc].play(freq, time);
 }
 
 function stopNote(id_osc) {
   tones[id_osc].stop();
 }
 
-function playChord(id_scale, p_key, chord, dt) {
+function playChord(id_scale, p_key, chord, dt) { 
   clearGrid(id_scale);
-  for (var k = 0; k < n_osc; k++) stopNote(k);
+  if (pl_score != 0) {for (var k = 0; k < n_osc; k++) stopNote(k); wait(50)}
   for (var k = 0; k < chord.length; k++) {
     var j = k;
     if (dt < 0) j =  chord.length - k - 1;
     console.log("p_key: ", p_key, "chord :", chord[j])
     playNote(id_scale, p_key + chord[j], k);
-    wait(abs(dt));
-    if (abs(dt) > 100) stopNote(k);
+    wait(Math.abs(dt));
+    if (Math.abs(dt) > 500) stopNote(k);
   }
   id_c_key = p_key;
   //println();
@@ -264,12 +266,16 @@ function playScore(id_scale, p_key, score) {
   var k = 0;
   var t = millis();
   while ( k < score.length) {
+    //if (millis() > (t + 200)) {console.log("stop")}
     if (millis() > (t + 300)) {
+      //for (var i = 0; i < n_osc; i++) stopNote(i);
+      console.log("stop");
       id_c_scoreChord = k;
       playChord(id_scale, p_key, score[k], 0);
       k++;
       t = millis();
     }
+
   }
   pl_score = 0;
 }
@@ -414,11 +420,11 @@ function setup() {
 
   // Define variables again:
   //synt_scale_names = ["CHI_53", "Salinas_24", "Salinas_14", "Mersenne 1", "Mersenne 2", "Newton", "Holder", "Euler"]; 
-  t = -1;
-  dt = 20;
-  initAudio();
+  //t = -1;
+  //dt = 20;
+  Synthesizer.init();
 
-  var diagramCanvas = createCanvas(800, 400);
+  var diagramCanvas = createCanvas(700, 400);
   diagramCanvas.parent("diagram");
 
   frameRate(fr);
@@ -623,110 +629,6 @@ function mouseReleased() {
   clearGrid(id_c_scale);
 };
 
-// initialize Audio
-function initAudio () {
-
-  console.log('initialize audio ...');
-
-  // Fix up prefixing 
-  window.AudioContext = window.AudioContext || window.webkitAudioContext;
-  
-  // Create AudioContext
-  if (AudioContext) {
-    context = new AudioContext();
-    console.log("AudioContext available")
-  } else {
-    alert('No audiocontext available');
-  };
-
-    // Check if createGain is available
-  if (!context.createGain) context.createGain = context.createGainNode;
-
-  Master.init();
-
-};
-
-var Master = {}
-
-Master.init = function() {
-
-  this.gainNode = context.createGain();
-  this.gainNode.connect(context.destination);
-
-};
-
-var Adsr = function () {
-
-    this.attack = 0.01;
-    this.decay = 0.02;
-    this.sustain = 0.2;
-    this.sustainLevel = 0.7;
-    this.release = 0.2;
-    this.toneTime = this.attack + this.decay + this.sustain + this.decay;
-    this.volume = 1;
-    this.loop = false;
-    this.gainNode = context.createGain();
-    this.gainNode.gain.value = 0;
-    this.time = context.currentTime;
-
-};
-
-Adsr.prototype.gate = function () {
-
-    var time = context.currentTime + 0.01;
-
-    var volume = 0.5;
-
-    // set on 0 Level
-    this.gainNode.gain.linearRampToValueAtTime(0, time);
-    
-    // set on attack Level (highest Volume) 
-    this.gainNode.gain.linearRampToValueAtTime(volume, time + this.attack);
-    
-    // decay to sustainLevel 
-    this.gainNode.gain.linearRampToValueAtTime(volume*this.sustainLevel, time + this.attack+this.decay);
-    
-    if (!this.loop) {// sustain - 
-      this.gainNode.gain.linearRampToValueAtTime(volume*this.sustainLevel, time + this.attack+this.decay+this.sustain);
-
-      // this.decay - 
-      this.gainNode.gain.linearRampToValueAtTime(0, time + this.attack+this.decay+this.sustain+this.release);
-    };
-
-};
-
-function Sound() {
-};
-
-Sound.prototype.play = function (freq, t) {
-
-  this.wave = context.createOscillator();
-
-  this.gainNode = context.createGain();
-
-  this.envelope = new Adsr();
-
-  this.wave.connect(this.envelope.gainNode);
-
-  this.envelope.gainNode.connect(Master.gainNode);
-
-  this.envelope.gate();
-
-  this.wave.frequency.value = freq;
-
-  this.wave.start(0);
-
-  
-
-  //if (!Adsr.loop) this.wave.stop(context.currentTime + this.time)
-
-};
-
-Sound.prototype.stop = function () {
-
-  if (this.wave) this.wave.stop(context.currentTime+0.1);
-
-};
 
 
 
