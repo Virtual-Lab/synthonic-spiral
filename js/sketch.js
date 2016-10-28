@@ -38,6 +38,13 @@ var btn_pos = [
   [323, 25, 20, 15]  // transp down
 ];
 
+var soundFreq = document.getElementById("soundFreq");
+var soundFreqSet = document.getElementById("soundFreqSet");
+var soundOn = document.getElementById("soundOn");
+var soundOff = document.getElementById("soundOff");
+
+var audio = true;
+
 var spiralDots = new Array(400);
 for(var i = 0; i<400; i++) spiralDots[i] = new Array(3);
 
@@ -102,6 +109,50 @@ var myScore_12, c_score;
 var u = 50, x0 = 170, y0 = 220;  // grid
 var x0_s = 500, y0_s = 200, r0_s = 150, dr_s = -20; // spiral
 var r_c = 60;  // diatonic circle
+
+function soundSetting () {
+
+  selection.addEventListener("submit", function(event) {
+     event.preventDefault()}, false);
+
+  soundFreq.addEventListener("input", function(event) {
+    event.preventDefault();
+    f0 = event.target.value;
+    soundFreqSet.value = f0;
+    console.log("BaseFreq: ", f0)
+  }, false);
+
+  soundFreqSet.addEventListener("input", function(event) {
+    event.preventDefault();
+    value = event.target.value;
+    f0 = value;
+    soundFreq.value = value;
+  }, false);
+
+  soundOn.onclick = function () { 
+    audioSwitch();
+  };
+    
+}
+
+function audioSwitch() {
+
+  if (!audio) {
+    for (var k = 0; k < n_osc; k++) {
+      tones[k] = new Sound();
+    };
+    audio = true;
+    soundOn.value = "on";
+  } else {
+    tones = undefined;
+    delete window['Sound'];
+
+    tones = new Array(n_osc);
+    audio = false;
+    soundOn.value = "off";
+  }
+
+}
 
 var nm_note = function (n) {  // n = 0 -> F
   var alt = '#';
@@ -241,7 +292,7 @@ function stopNote(id_osc) {
 
 function playChord(id_scale, p_key, chord, dt) { 
   clearGrid(id_scale);
-  if (pl_score != 0) {for (var k = 0; k < n_osc; k++) stopNote(k); wait(50)}
+  for (var k = 0; k < n_osc; k++) stopNote(k); wait(50);
   for (var k = 0; k < chord.length; k++) {
     var j = k;
     if (dt < 0) j =  chord.length - k - 1;
@@ -423,6 +474,7 @@ function setup() {
   //t = -1;
   //dt = 20;
   Synthesizer.init();
+  soundSetting();
 
   var diagramCanvas = createCanvas(700, 400);
   diagramCanvas.parent("diagram");
