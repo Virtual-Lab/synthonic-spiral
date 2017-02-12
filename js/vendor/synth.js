@@ -72,7 +72,7 @@ Synthesizer.set = {
   ['slider', 'change', 'Attack', 0, 1000, 0.01, 'attack: '],
   ['slider', 'change', 'Decay', 0, 1000, 0.1, 'decay: '],
   ['slider', 'change', 'Sustain', 0, 1000, 1, 'sustain: '],
-  ['slider', 'change', 'Release', 0, 1000, 0.2, 'release: ']
+  ['slider', 'change', 'Release', 0, 1000, 0.1, 'release: ']
   ], 
   Master : [
   ['slider', 'change', 'masterVolume', 0, 1000, 0.5, 'volume: ']
@@ -112,7 +112,6 @@ Synthesizer.view.draw = function (name, element) {
   for (i=0;i<20;i++) { zeile[i] = document.createElement('BR');};
 
   legend.appendChild(legendName);
-  field.className = "fieldset";
   field.appendChild(legend);
 
   // console.log('Settings: ',elements, 'length: ', elements.length);
@@ -133,7 +132,7 @@ Synthesizer.view.draw = function (name, element) {
 
   // append the section to the synthesizer
   this.synthesizer.appendChild(field);
-  this.synthesizer.appendChild(zeile[0  ]);
+  this.synthesizer.appendChild(zeile[0]);
 
 }
 
